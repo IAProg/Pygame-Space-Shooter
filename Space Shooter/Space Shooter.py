@@ -3,21 +3,26 @@ from pygame.locals import *
 from random import randint
 
 class Star:
+	#loading star textures into list
 	star1 = pygame.image.load("Sprites\\Star1.png")
 	star2 = pygame.image.load("Sprites\\Star2.png")
 	star3 = pygame.image.load("Sprites\\Star3.png")
 	star4 = pygame.image.load("Sprites\\Star4.png")
 	skins = [star1,star2,star3,star4]
+
+	#Star init function giving random start data
 	def __init__(self,surface):
 		self.surface = surface
 		self.size = randint(1,4)
 		self.pos = [randint(0,600),randint(-10,610)]
-		
+	
+	#reset function to reuse star object
 	def new(self):
 		self.pos[0] = randint(0,600)
 		self.pos[1] = -10
 		self.size = randint(1,4)
 
+	#update function, moves and displays star
 	def tick(self):
 		self.pos[1] += 0.1 * self.size
 		if self.pos[1]>610:
@@ -25,16 +30,16 @@ class Star:
 		self.surface.blit(Star.skins[self.size-1],(self.pos))
 
 class Mine:
+	#loading mine texture
 	mineImage = pygame.image.load("Sprites\\mine.png")
 	speed = 2
+	reward = 10
+	#mine init with random X start location
 	def __init__(self,game):
 		self.game = game
 		self.cull = False
 		self.pos = [randint(0,600),-10]
 		self.rect = pygame.Rect(self.pos[0],self.pos[1],50,50)
-
-	def kill(self):
-		self.cull = True
 
 	def tick(self,array,pos):
 		self.pos[1] += Mine.speed
@@ -93,16 +98,37 @@ class Player:
 		self.game.surface.blit(Player.shipImage,(self.pos))
 
 class ScoreBoard:
+	#Loading images 0-9
+	digits = []
+	for i in range(0,10): digits.append(pygame.image.load("Sprites\\digit"+str(i)+".png"))
+
+	#Loading background image
 	background = pygame.image.load("Sprites\\scoreBackground.png")
+	#init scoreboard
 	def __init__(self,game):
 		self.game = game
-		self.font = pygame.font.SysFont("Fixedsys", 32)
 
-	def draw(self):
-		text = self.font.render(str(self.game.score),False,(255,255,255))
+	#update and display scoreboard
+	def tick(self):
+		#converting the game score into a useable list
+		scoreArray = [int(value) for value in str(self.game.score)]
+		if len(scoreArray) < 4:
+			for i in range(4-len(scoreArray)):
+				scoreArray.insert(0,0)
 
+		#pushing to display
 		self.game.surface.blit(ScoreBoard.background,(600,0))
-		self.game.surface.blit(text,(650,50))
+
+		for i in range(self.game.playerHealth):
+			rect = pygame.Rect(620+(i*8),138,7,60)
+
+			r = 255+((i*12)*-1)
+			g = 0+(12*i)
+
+			pygame.draw.rect(self.game.surface,(r,g,100),rect)
+
+		for i in range(len(scoreArray)):
+			self.game.surface.blit(ScoreBoard.digits[scoreArray[i]],((624+(40*i)),40))
 
 class Game:
 	clock = pygame.time.Clock()
@@ -113,6 +139,8 @@ class Game:
 		self.score = 0		
 		self.bulletTimer = 1
 		self.dt = 0
+
+		self.playerHealth = 20
 
 		self.surface = pygame.display.set_mode((800,600))
 		self.player = Player(self)
@@ -160,12 +188,18 @@ class Game:
 				if bullet.rect.colliderect(mine.rect):
 					mine.cull=True
 					bullet.cull=True
-					self.score+=100
+					self.score+=Mine.reward
 					print("bullet hit mine \nScore:",self.score)
+
+		for mine in self.mines:
+			if self.player.rect.colliderect(mine.rect):
+				mine.cull=True
+				self.playerHealth -= 1
+				print("player hit mine")
 
 	def update(self):
 
-		self.surface.fill([30,30,60])
+		self.surface.fill([20,20,60])
 
 		for i in range (len(self.stars)):
 			self.stars[i].tick()
@@ -185,7 +219,7 @@ class Game:
 		if randint(0,50) == 1:
 			self.spawnEnemy()
 
-		self.scoreBoard.draw()
+		self.scoreBoard.tick()
 
 		self.player.tick()
 
