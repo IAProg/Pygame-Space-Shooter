@@ -4,10 +4,10 @@ from random import randint
 
 class Star:
 	#loading star textures into list
-	star1 = pygame.image.load("Sprites\\Star1.png")
-	star2 = pygame.image.load("Sprites\\Star2.png")
-	star3 = pygame.image.load("Sprites\\Star3.png")
-	star4 = pygame.image.load("Sprites\\Star4.png")
+	star1 = pygame.image.load("Sprites/Star1.png")
+	star2 = pygame.image.load("Sprites/Star2.png")
+	star3 = pygame.image.load("Sprites/Star3.png")
+	star4 = pygame.image.load("Sprites/Star4.png")
 	skins = [star1,star2,star3,star4]
 
 	#Star init function giving random start data
@@ -31,7 +31,7 @@ class Star:
 
 class Mine:
 	#loading mine texture
-	mineImage = pygame.image.load("Sprites\\mine.png")
+	mineImage = pygame.image.load("Sprites/mine.png")
 	speed = 2
 	reward = 10
 	#mine init with random X start location
@@ -39,7 +39,7 @@ class Mine:
 		self.game = game
 		self.cull = False
 		self.pos = [randint(0,600),-10]
-		self.rect = pygame.Rect(self.pos[0],self.pos[1],50,50)
+		self.rect = Mine.mineImage.get_rect()
 
 	def tick(self,array,pos):
 		self.pos[1] += Mine.speed
@@ -49,15 +49,17 @@ class Mine:
 
 		if self.pos[1] > 600 or self.cull: del array[pos]
 		self.game.surface.blit(Mine.mineImage,(self.pos))
+		#debug option draw hitbox
+		pygame.draw.rect(self.game.surface,(0,255,0),self.rect,1)
 
 class Bullet:
-	bulletImage = pygame.image.load("Sprites\\bullet.png")
+	bulletImage = pygame.image.load("Sprites/bullet.png")
 	speed = 15
 	def __init__(self,game):
 		self.game = game
 		self.cull = False
-		self.pos = [game.player.pos[0],game.player.pos[1]]
-		self.rect = pygame.Rect(self.pos[0],self.pos[1],20,52)
+		self.pos = [game.player.pos[0]+8,game.player.pos[1]]
+		self.rect = Bullet.bulletImage.get_rect()
 
 	def tick(self,array,i):
 		self.pos[1] -= Bullet.speed
@@ -69,14 +71,17 @@ class Bullet:
 
 		self.game.surface.blit(Bullet.bulletImage,(self.pos))
 
+		#debug option draw hitbox
+		pygame.draw.rect(self.game.surface,(0,255,0),self.rect,1)
+
 class Player:
 	friction = 0.85
 	speed = 2
-	shipImage = pygame.image.load("Sprites\\ship.png")
+	shipImage = pygame.image.load("Sprites/ship.png")
 	def __init__(self,game):
 		self.game = game
-		self.pos = [400,300]
-		self.rect = pygame.Rect(self.pos[0],self.pos[1],50,50)
+		self.pos = [268,300]
+		self.rect = Player.shipImage.get_rect()
 		self.vel = [0,0]
 
 	def move(self,axis,direction):
@@ -95,15 +100,17 @@ class Player:
 		self.rect.x = self.pos[0]
 		self.rect.y = self.pos[1]
 
-		self.game.surface.blit(Player.shipImage,(self.pos))
+		self.game.surface.blit(Player.shipImage,self.rect)
+		#debug option draw hitbox
+		pygame.draw.rect(self.game.surface,(0,255,0),self.rect,1)
 
 class ScoreBoard:
 	#Loading images 0-9
 	digits = []
-	for i in range(0,10): digits.append(pygame.image.load("Sprites\\digit"+str(i)+".png"))
+	for i in range(0,10): digits.append(pygame.image.load("Sprites/digit"+str(i)+".png"))
 
 	#Loading background image
-	background = pygame.image.load("Sprites\\scoreBackground.png")
+	background = pygame.image.load("Sprites/scoreBackground.png")
 	#init scoreboard
 	def __init__(self,game):
 		self.game = game
@@ -171,7 +178,7 @@ class Game:
 		pressed = pygame.key.get_pressed()
 		self.bulletTimer -= self.dt
 		if pressed[pygame.K_SPACE] and self.bulletTimer <= 0:
-			self.bulletTimer = .1
+			self.bulletTimer = .2
 			self.bullets.append(Bullet(self))
 		if pressed[pygame.K_a]:
 			self.player.move(1,-1)
@@ -216,7 +223,7 @@ class Game:
 		except:
 			pass
 
-		if randint(0,50) == 1:
+		if randint(0,40) == 1:
 			self.spawnEnemy()
 
 		self.scoreBoard.tick()
